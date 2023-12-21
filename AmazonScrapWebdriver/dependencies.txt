@@ -1,0 +1,7 @@
+selenium
+beautifulsoup4
+requests
+python-dateutil
+pymongo
+pandas
+numpy
