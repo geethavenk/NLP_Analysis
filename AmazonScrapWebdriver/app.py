@@ -31,10 +31,10 @@ for i in range(len(asins)):
             else:
                 break
 
-## Transfer data from csv to mongoDB database
+# Transfer data from csv to mongoDB database
 df_rev = pd.read_csv('Reviews.csv', sep=",")
 df_rev.drop_duplicates(inplace=True)
-mongo_client = MongoDBOps(username="geetharv", pwd='mongo123')
+mongo_client = MongoDBOps(username="ABC", pwd='XYZ')
 db_name = 'Neemai'
 collection_name = 'maternity_wear'
 mongo_client.df_to_collection(db_name=db_name, collection_name=collection_name, df=df_rev)

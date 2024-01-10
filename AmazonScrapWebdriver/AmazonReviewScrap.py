@@ -2,23 +2,40 @@ from selenium import webdriver
 from bs4 import BeautifulSoup as bs
 
 
-## create browser to request page data
-browser = webdriver.Chrome()
-
-
 class AmazonScrapper:
-    base_url = "https://www.amazon.in/s?k="
+    """
+    A class for scraping reviews from Amazon India.
+
+    Parameters:
+        search_term (str): The search term used on Amazon
+        sleep_time (float): Time delay between HTTP requests to avoid being blocked (default is 2 seconds)
+    """
+
 
     def __init__(self, search_term, sleep_time=2):
+        """
+        Initialize the AmazonScrapper object.
+        Parameters:
+            search_term (str): The search term used on Amazon
+            sleep_time (float): Time delay between HTTP requests to avoid being blocked (default is 2 seconds)
+        """
+        self.base_url = "https://www.amazon.in/s?k="
         self.sleep_time = sleep_time
         self.search_term = search_term
+        self.browser = webdriver.Chrome()
 
     #Get http request wrapper using chromedriver
     def get_amazon_search_results(self):
+        """
+        Get HTTP request wrapper using chromedriver.
+        Returns:
+            str: The HTML content of the Amazon search results page.
+
+        """
         try:
-            url = AmazonScrapper.base_url+self.search_term
-            browser.get(url)
-            page_html = browser.page_source
+            url = self.base_url+self.search_term
+            self.browser.get(url)
+            page_html = self.browser.page_source
 
             if "api-services-support@amazon.com" in page_html:
                 raise Exception("CAPTCHA is not bypassed")
@@ -27,8 +44,14 @@ class AmazonScrapper:
         except Exception as e:
             raise Exception(f"get_amazon_search_results-Error: {str(e)}")
 
-    # Exctract ASIN numbers from the search result page
+    # Extract ASIN numbers from the search result page
     def get_asin(self):
+        """
+        Extract ASIN numbers from the search result page
+        Returns:
+            list: A list of ASIN numbers
+
+        """
         asin_list = []
         try:
             response = self.get_amazon_search_results()
@@ -41,12 +64,20 @@ class AmazonScrapper:
             raise Exception(f"get_asin-Error: {str(e)}")
 
     # Get review page for the asin
-
     def get_asin_reviewlink(self, asin):
+        """
+
+        Parameters:
+            asin (str): The ASIN number for which review link to be extracted
+
+        Returns:
+            str: a URL that contains the reviews
+
+        """
         url = "https://www.amazon.in/dp/" + asin
         try:
-            browser.get(url)
-            asin_html = browser.page_source
+            self.browser.get(url)
+            asin_html = self.browser.page_source
 
             if "api-services-support@amazon.com" not in asin_html:
                 soup = bs(asin_html, 'html.parser')
@@ -57,13 +88,23 @@ class AmazonScrapper:
 
     # Extract reviews
     def get_reviews(self, review_link, page_nr):
+        """
+        Extract reviews for the given link and page number
+        Parameters:
+            review_link (str): A URL which contains the reviews
+            page_nr (int): page number
+
+        Returns:
+            list: A list of reviews in the given URL and page number
+
+        """
         reviews_list = []
 
         url = "https://www.amazon.in" + review_link + '&pageNumber=' + str(page_nr)
         # print(url)
         try:
-            browser.get(url)
-            page = browser.page_source
+            self.browser.get(url)
+            page = self.browser.page_source
             if "api-services-support@amazon.com" not in page:
                 soup = bs(page, 'html.parser')
                 reviews = soup.find_all('div', {'data-hook': 'review'})
@@ -90,10 +131,8 @@ class AmazonScrapper:
                         ele2 = item.find('i', {'class': 'a-icon a-icon-text-separator'}).previous_sibling
                         if "Size: " in ele1:
                             size = ele1.replace("Size: ", "")
-                            #print(size)
                         elif "Size: " in ele2:
                             size = ele2.replace("Size: ", "")
-                            #print(size)
                     except:
                         size = 'no size'
 
@@ -111,11 +150,21 @@ class AmazonScrapper:
 
     # Get next page status
     def get_np_status(self, review_link, page_nr):
+        """
+        Get next page status i.e., if next page of review exists or not
+        Parameters:
+            review_link (str): A URL which contains the reviews
+            page_nr (int): page number
+
+        Returns:
+            bool: True or False. Returns False if next page does not exist, True if next page exists.
+
+        """
         url = "https://www.amazon.in" + review_link + '&pageNumber=' + str(page_nr)
 
         try:
-            browser.get(url)
-            page = browser.page_source
+            self.browser.get(url)
+            page = self.browser.page_source
 
             if "api-services-support@amazon.com" not in page:
                 soup = bs(page, 'html.parser')
@@ -127,16 +176,4 @@ class AmazonScrapper:
                     return True
 
         except Exception as e:
-                raise Exception(f"get_np_status: Error - {str(e)}")
-
-
-
-
-
-
-
-
-
-
-
-
+            raise Exception(f"get_np_status: Error - {str(e)}")
